@@ -43,6 +43,7 @@ class DoublyLinkedList:
     Attributes:
         head: The first node in the list.
         tail: The last node in the list.
+        length: The number of nodes in the list.
 
     """
 
@@ -50,6 +51,7 @@ class DoublyLinkedList:
         """Initialize an empty doubly linked list."""
         self.head: Node | None = None
         self.tail: Node | None = None
+        self.length: int = 0
 
     def __iter__(self) -> Iterator[int]:
         """Yield each node's value, from head to tail."""
@@ -58,9 +60,14 @@ class DoublyLinkedList:
             yield current.value
             current = current.next
 
+    def __len__(self) -> int:
+        """Return the number of nodes in the list."""
+        return self.length
+
     def append_left(self, value: int) -> None:
         """Add a new node with the given value to the beginning of the list."""
         new_node = Node(value)
+        self.length += 1
         if not self.head:
             self.tail = new_node
             self.head = new_node
@@ -72,6 +79,7 @@ class DoublyLinkedList:
     def append_right(self, value: int) -> None:
         """Add a new node with the given value to the end of the list."""
         new_node = Node(value)
+        self.length += 1
         if not self.tail:
             self.tail = new_node
             self.head = new_node
@@ -93,10 +101,12 @@ class DoublyLinkedList:
         if self.head == self.tail:
             self.head = None
             self.tail = None
+            self.length = 0
             return removed_value
         self.head = self.head.next
         assert self.head
         self.head.prev = None
+        self.length -= 1
         return removed_value
 
     def pop_right(self) -> int | None:
@@ -112,49 +122,99 @@ class DoublyLinkedList:
         if self.head == self.tail:
             self.head = None
             self.tail = None
+            self.length = 0
             return removed_value
         self.tail = self.tail.prev
         assert self.tail
         self.tail.next = None
+        self.length -= 1
         return removed_value
+
+    def get(self, index: int) -> int:
+        """Get the value at a specific index.
+
+        This method retrieves the value of the node at the given index.
+        It optimizes the search by traversing from the head for the first half
+        of the list and from the tail for the second half.
+
+        Args:
+        index: The index of the node to retrieve.
+
+        Returns:
+        int: The value of the node at the specified index.
+
+        Raises:
+        IndexError: If the index is out of the list's bounds.
+
+        """
+        if index < 0 or index >= self.length:
+            raise IndexError("Index out of range")
+        if index < self.length // 2:
+            current = self.head
+            for _ in range(index):
+                assert current
+                current = current.next
+            assert current
+            return current.value
+        current = self.tail
+        for _ in range(self.length - index - 1):
+            assert current
+            current = current.prev
+        assert current
+        return current.value
 
 
 if __name__ == "__main__":
-    # Create an empty doubly linked list
+    print("--- Initializing Doubly Linked List ---")
     dll = DoublyLinkedList()
+    print(f"Initial list: {list(dll)}")
+    print(f"Initial length: {len(dll)}\n")
 
-    # Append elements to the right (end of the list)
-    dll.append_right(1)  # List: 1
-    dll.append_right(2)  # List: 1 <-> 2
-    dll.append_right(3)  # List: 1 <-> 2 <-> 3
+    print("--- Testing append_right ---")
+    dll.append_right(1)
+    dll.append_right(2)
+    dll.append_right(3)
+    print(f"List after append_right: {list(dll)}")
+    print(f"Length: {len(dll)}\n")
 
-    # Append elements to the left (start of the list)
-    dll.append_left(0)  # List: 0 <-> 1 <-> 2 <-> 3
-    dll.append_left(-1)  # List: -1 <-> 0 <-> 1 <-> 2 <-> 3
+    print("--- Testing append_left ---")
+    dll.append_left(0)
+    dll.append_left(-1)
+    print(f"List after append_left: {list(dll)}")
+    print(f"Length: {len(dll)}\n")
 
-    # Iterate over the list and print each value
-    # Expected output: -1 0 1 2 3
-    for value in dll:
-        print(value)
+    print("--- Testing get() ---")
+    print(f"Value at index 0: {dll.get(0)}")  # Expected: -1
+    print(f"Value at index 2: {dll.get(2)}")  # Expected: 1
+    print(f"Value at index 4: {dll.get(4)}")  # Expected: 3
 
-    # Pop elements from the left (start)
-    # Removes -1, then 0
-    print(dll.pop_left())  # Expected: -1
-    print(dll.pop_left())  # Expected: 0
+    try:
+        dll.get(99)
+    except IndexError as e:
+        print(f"Successfully caught expected error: {e}\n")
 
-    # Pop elements from the right (end)
-    # Removes 3, then 2
-    print(dll.pop_right())  # Expected: 3
-    print(dll.pop_right())  # Expected: 2
+    print("--- Testing pop_left ---")
+    print(f"Popped from left: {dll.pop_left()}")  # Expected: -1
+    print(f"List after pop_left: {list(dll)}")
+    print(f"Length: {len(dll)}")
+    print(f"Popped from left: {dll.pop_left()}")  # Expected: 0
+    print(f"List after pop_left: {list(dll)}")
+    print(f"Length: {len(dll)}\n")
 
-    # Check the remaining element(s)
-    # Only 1 should remain
-    for value in dll:
-        print(value)  # Expected: 1
+    print("--- Testing pop_right ---")
+    print(f"Popped from right: {dll.pop_right()}")  # Expected: 3
+    print(f"List after pop_right: {list(dll)}")
+    print(f"Length: {len(dll)}")
+    print(f"Popped from right: {dll.pop_right()}")  # Expected: 2
+    print(f"List after pop_right: {list(dll)}")
+    print(f"Length: {len(dll)}\n")
 
-    # Pop the last remaining element
-    print(dll.pop_left())  # Expected: 1
+    print("--- Final State ---")
+    print(f"Final list: {list(dll)}")  # Expected: [1]
+    print(f"Final length: {len(dll)}\n")  # Expected: 1
 
-    # Try to pop from an empty list (should return None)
-    print(dll.pop_left())  # Expected: None
-    print(dll.pop_right())  # Expected: None
+    print("--- Testing empty list ---")
+    dll.pop_left()
+    print(f"Popped from empty list (left): {dll.pop_left()}")  # Expected: None
+    print(f"Popped from empty list (right): {dll.pop_right()}")  # Expected: None
+    print(f"Length of empty list: {len(dll)}")  # Expected: 0
